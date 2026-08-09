@@ -19,10 +19,18 @@ app.use(helmet());
 
 // ── CORS: solo el origen configurado puede llamar a la API, y con cookies ──
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5500';
+const FIXED_ORIGINS = FRONTEND_ORIGIN.split(',').map(o => o.trim());
+const LOCALHOST_ANY_PORT = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true, // necesario para que la cookie httpOnly viaje
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (FIXED_ORIGINS.includes(origin)) return callback(null, true);
+      if (LOCALHOST_ANY_PORT.test(origin)) return callback(null, true);
+      return callback(new Error('Origen no permitido por CORS: ' + origin));
+    },
+    credentials: true,
   })
 );
 
