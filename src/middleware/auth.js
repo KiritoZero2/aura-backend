@@ -10,13 +10,13 @@ function signToken(userId) {
 
 function cookieOptions() {
   return {
-    httpOnly: true, // JavaScript del navegador NUNCA puede leer esta cookie (protege contra XSS)
-    secure: process.env.COOKIE_SECURE === 'true', // true obligatorio en producción con HTTPS
-    sameSite: 'lax', // protege contra CSRF básico
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+    httpOnly: true,
+    secure: true, // obligatorio cuando sameSite es 'none'
+    sameSite: 'none', // necesario porque la APK corre en un origen distinto al del backend
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   };
-}
+}.
 
 function setAuthCookie(res, userId) {
   const token = signToken(userId);
