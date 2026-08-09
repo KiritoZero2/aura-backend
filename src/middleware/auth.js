@@ -16,7 +16,7 @@ function cookieOptions() {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   };
-}.
+}
 
 function setAuthCookie(res, userId) {
   const token = signToken(userId);
