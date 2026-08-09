@@ -26,6 +26,9 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5500';
 // FRONTEND_ORIGIN=https://tu-sitio.netlify.app,http://localhost:5500
 const FIXED_ORIGINS = FRONTEND_ORIGIN.split(',').map((o) => o.trim());
 const LOCALHOST_ANY_PORT = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const path = require('path');
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(
   cors({
