@@ -30,8 +30,8 @@ async function register(req, res, next) {
     const user = await User.create({ name, username, passwordHash });
     const data = await UserData.create({ user: user._id });
 
-    setAuthCookie(res, user._id.toString());
-    res.status(201).json({ user: user.toJSON(), data: data.toJSON() });
+    const token = setAuthCookie(res, user._id.toString());
+    res.status(201).json({ user: user.toJSON(), data: data.toJSON(), token });
   } catch (err) {
     next(err);
   }
@@ -46,7 +46,6 @@ async function login(req, res, next) {
       return res.status(400).json({ error: 'Completa todos los campos.' });
     }
 
-    // Pedimos explícitamente el passwordHash porque el schema lo excluye por defecto (select:false)
     const user = await User.findOne({ username }).select('+passwordHash');
     if (!user) {
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
@@ -60,8 +59,8 @@ async function login(req, res, next) {
     let data = await UserData.findOne({ user: user._id });
     if (!data) data = await UserData.create({ user: user._id });
 
-    setAuthCookie(res, user._id.toString());
-    res.json({ user: user.toJSON(), data: data.toJSON() });
+    const token = setAuthCookie(res, user._id.toString());
+    res.json({ user: user.toJSON(), data: data.toJSON(), token });
   } catch (err) {
     next(err);
   }
