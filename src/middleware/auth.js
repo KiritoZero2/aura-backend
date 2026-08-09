@@ -11,8 +11,8 @@ function signToken(userId) {
 function cookieOptions() {
   return {
     httpOnly: true,
-    secure: true, // obligatorio cuando sameSite es 'none'
-    sameSite: 'none', // necesario porque la APK corre en un origen distinto al del backend
+    secure: process.env.COOKIE_SECURE === 'true',
+    sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   };
@@ -21,14 +21,26 @@ function cookieOptions() {
 function setAuthCookie(res, userId) {
   const token = signToken(userId);
   res.cookie(COOKIE_NAME, token, cookieOptions());
+  return token;
 }
 
 function clearAuthCookie(res) {
   res.clearCookie(COOKIE_NAME, { ...cookieOptions(), maxAge: 0 });
 }
 
+function extractToken(req) {
+  const fromCookie = req.cookies?.[COOKIE_NAME];
+  if (fromCookie) return fromCookie;
+
+  const authHeader = req.headers['authorization'] || '';
+  if (authHeader.startsWith('Bearer ')) {
+    return authHeader.slice(7).trim();
+  }
+  return null;
+}
+
 function requireAuth(req, res, next) {
-  const token = req.cookies?.[COOKIE_NAME];
+  const token = extractToken(req);
   if (!token) {
     return res.status(401).json({ error: 'No autenticado.' });
   }
