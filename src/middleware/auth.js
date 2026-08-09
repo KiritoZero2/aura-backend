@@ -54,4 +54,22 @@ function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth, setAuthCookie, clearAuthCookie, COOKIE_NAME };
+// Igual que requireAuth, pero además busca el username en la BD y lo adjunta a
+// req.username. Lo usan las rutas de feedback público, donde queremos mostrar
+// "por @usuario" sin exponer el userId de Mongo.
+function requireAuthWithUsername(req, res, next) {
+  requireAuth(req, res, async (err) => {
+    if (err) return next(err);
+    try {
+      const User = require('../models/User');
+      const user = await User.findById(req.userId);
+      if (!user) return res.status(401).json({ error: 'No autenticado.' });
+      req.username = user.username;
+      next();
+    } catch (e) {
+      next(e);
+    }
+  });
+}
+
+module.exports = { requireAuth, requireAuthWithUsername, setAuthCookie, clearAuthCookie, COOKIE_NAME };
