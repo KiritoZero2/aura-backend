@@ -19,16 +19,9 @@ const app = express();
 app.use(helmet());
 
 // ── CORS: acepta tu(s) origen(es) web fijos + cualquier localhost:puerto (necesario para la APK) ──
-// html2app (y herramientas similares) sirven tu HTML desde un servidor interno en
-// http://localhost:PUERTO_ALEATORIO — el puerto cambia, así que no podemos poner un solo valor fijo.
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5500';
-// Si tienes varias URLs web fijas (ej. Netlify + localhost de pruebas), sepáralas por comas:
-// FRONTEND_ORIGIN=https://tu-sitio.netlify.app,http://localhost:5500
 const FIXED_ORIGINS = FRONTEND_ORIGIN.split(',').map((o) => o.trim());
 const LOCALHOST_ANY_PORT = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-const path = require('path');
-
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(
   cors({
@@ -43,7 +36,9 @@ app.use(
 );
 app.options('*', cors());
 
-app.use(express.json({ limit: '1mb' }));
+// Subido de 1mb a 2mb: una foto de perfil comprimida (320px, jpeg) en base64 puede pesar
+// varios cientos de KB; 2mb da margen sin abrir la puerta a payloads abusivos.
+app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 app.use(mongoSanitize()); // limpia claves tipo "$where" o "." en el body/query
 
@@ -64,6 +59,6 @@ const PORT = process.env.PORT || 4000;
 
 connectDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 AURA backend escuchando en http://localhost:${PORT}`);
+    console.log(`🚀 QuantumCash backend escuchando en http://localhost:${PORT}`);
   });
 });
