@@ -25,6 +25,13 @@ const UserSchema = new mongoose.Schema(
       required: true,
       select: false, // nunca se devuelve por defecto en las consultas
     },
+    // Foto de perfil guardada como data URL base64 (ya comprimida/recortada en el navegador
+    // antes de subirla, así que el tamaño máximo esperado es pequeño, ~50-150KB).
+    avatarUrl: {
+      type: String,
+      default: null,
+      maxlength: 400000, // margen de sobra sobre lo que debería llegar ya comprimido
+    },
     since: {
       type: Date,
       default: Date.now,
