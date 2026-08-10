@@ -4,6 +4,7 @@ const UserData = require('../models/UserData');
 const { setAuthCookie, clearAuthCookie } = require('../middleware/auth');
 
 const SALT_ROUNDS = 12;
+const MAX_AVATAR_CHARS = 400000; // ~300KB en base64, de sobra para un avatar ya comprimido a 320px
 
 async function register(req, res, next) {
   try {
@@ -83,11 +84,33 @@ async function me(req, res, next) {
   }
 }
 
+// Actualiza nombre y/o foto de perfil.
+// avatarUrl en el body puede ser:
+//   - ausente (undefined)  -> no se toca la foto actual
+//   - null                  -> se elimina la foto (vuelve a mostrar la inicial)
+//   - "data:image/..."      -> se guarda la nueva foto (ya viene comprimida desde el navegador)
 async function updateProfile(req, res, next) {
   try {
     const name = (req.body.name || '').trim();
     if (!name) return res.status(400).json({ error: 'Nombre inválido.' });
-    const user = await User.findByIdAndUpdate(req.userId, { name }, { new: true });
+
+    const update = { name };
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'avatarUrl')) {
+      const avatarUrl = req.body.avatarUrl;
+      if (avatarUrl === null) {
+        update.avatarUrl = null;
+      } else if (typeof avatarUrl === 'string' && avatarUrl.startsWith('data:image/')) {
+        if (avatarUrl.length > MAX_AVATAR_CHARS) {
+          return res.status(413).json({ error: 'La imagen es demasiado grande.' });
+        }
+        update.avatarUrl = avatarUrl;
+      } else {
+        return res.status(400).json({ error: 'Formato de imagen inválido.' });
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(req.userId, update, { new: true, runValidators: true });
     res.json({ user: user.toJSON() });
   } catch (err) {
     next(err);
