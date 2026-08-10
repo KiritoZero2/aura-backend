@@ -94,4 +94,35 @@ async function updateProfile(req, res, next) {
   }
 }
 
-module.exports = { register, login, logout, me, updateProfile };
+// Cambiar contraseña: exige la contraseña actual para evitar que alguien con el celular
+// desbloqueado (o el token robado desde localStorage) pueda tomar la cuenta por completo.
+async function changePassword(req, res, next) {
+  try {
+    const currentPassword = req.body.currentPassword || '';
+    const newPassword = req.body.newPassword || '';
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Completa todos los campos.' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener mínimo 8 caracteres.' });
+    }
+
+    const user = await User.findById(req.userId).select('+passwordHash');
+    if (!user) return res.status(401).json({ error: 'No autenticado.' });
+
+    const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!ok) {
+      return res.status(401).json({ error: 'La contraseña actual no es correcta.' });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await user.save();
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, logout, me, updateProfile, changePassword };
