@@ -9,6 +9,7 @@ router.use(requireAuthWithUsername); // hay que estar logueado para leer/escribi
 router.get('/', ctrl.list);
 router.post('/', ctrl.create);
 router.post('/:id/vote', ctrl.vote);
-router.patch('/:id/status', ctrl.updateStatus);
+router.patch('/:id/status', ctrl.updateStatus); // solo admins (validado en el controller)
+router.delete('/:id', ctrl.destroy);            // solo admins (validado en el controller)
 
 module.exports = router;
