@@ -54,9 +54,8 @@ function requireAuth(req, res, next) {
   }
 }
 
-// Igual que requireAuth, pero además busca el username en la BD y lo adjunta a
-// req.username. Lo usan las rutas de feedback público, donde queremos mostrar
-// "por @usuario" sin exponer el userId de Mongo.
+// Igual que requireAuth, pero además busca el username y role en la BD y los adjunta
+// a req.username y req.userRole. Lo usan las rutas de feedback y admin.
 function requireAuthWithUsername(req, res, next) {
   requireAuth(req, res, async (err) => {
     if (err) return next(err);
@@ -65,6 +64,7 @@ function requireAuthWithUsername(req, res, next) {
       const user = await User.findById(req.userId);
       if (!user) return res.status(401).json({ error: 'No autenticado.' });
       req.username = user.username;
+      req.userRole = user.role || 'free';
       next();
     } catch (e) {
       next(e);
@@ -72,4 +72,26 @@ function requireAuthWithUsername(req, res, next) {
   });
 }
 
-module.exports = { requireAuth, requireAuthWithUsername, setAuthCookie, clearAuthCookie, COOKIE_NAME };
+// Middleware de roles: úsalo después de requireAuth o requireAuthWithUsername.
+// Ejemplo: router.get('/admin/users', requireAuth, requireRole('admin'), ctrl.listUsers)
+function requireRole(...roles) {
+  return async (req, res, next) => {
+    try {
+      // Si requireAuthWithUsername ya corrió, tenemos req.userRole; si no, lo buscamos.
+      if (!req.userRole) {
+        const User = require('../models/User');
+        const user = await User.findById(req.userId);
+        if (!user) return res.status(401).json({ error: 'No autenticado.' });
+        req.userRole = user.role || 'free';
+      }
+      if (!roles.includes(req.userRole)) {
+        return res.status(403).json({ error: 'No tienes permisos para esta acción.' });
+      }
+      next();
+    } catch (e) {
+      next(e);
+    }
+  };
+}
+
+module.exports = { requireAuth, requireAuthWithUsername, requireRole, setAuthCookie, clearAuthCookie, COOKIE_NAME };
