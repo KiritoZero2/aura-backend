@@ -57,6 +57,10 @@ async function vote(req, res, next) {
 
 async function updateStatus(req, res, next) {
   try {
+    // Solo admins pueden cambiar el estado de una sugerencia
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Solo los administradores pueden cambiar el estado.' });
+    }
     const estado = req.body.estado;
     if (!ESTADOS.includes(estado)) return res.status(400).json({ error: 'Estado inválido.' });
     const item = await Feedback.findByIdAndUpdate(req.params.id, { estado }, { new: true });
@@ -67,4 +71,18 @@ async function updateStatus(req, res, next) {
   }
 }
 
-module.exports = { list, create, vote, updateStatus };
+async function destroy(req, res, next) {
+  try {
+    // Solo admins pueden eliminar sugerencias
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Solo los administradores pueden eliminar sugerencias.' });
+    }
+    const item = await Feedback.findByIdAndDelete(req.params.id);
+    if (!item) return res.status(404).json({ error: 'No encontrado.' });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, create, vote, updateStatus, destroy };

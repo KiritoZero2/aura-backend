@@ -8,11 +8,12 @@ const MAX_AVATAR_CHARS = 400000; // ~300KB en base64, de sobra para un avatar ya
 
 async function register(req, res, next) {
   try {
-    const name = (req.body.name || '').trim();
     const username = (req.body.username || '').trim().toLowerCase();
     const password = req.body.password || '';
+    // name es opcional desde la v6: si no viene, usamos el username como nombre de perfil
+    const name = (req.body.name || username).trim();
 
-    if (!name || !username || !password) {
+    if (!username || !password) {
       return res.status(400).json({ error: 'Completa todos los campos.' });
     }
     if (!/^[a-z0-9_]{3,30}$/.test(username)) {
