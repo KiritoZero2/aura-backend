@@ -11,6 +11,7 @@ const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/auth.routes');
 const dataRoutes = require('./src/routes/data.routes');
 const feedbackRoutes = require('./src/routes/feedback.routes');
+const adminRoutes = require('./src/routes/admin.routes');
 const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
@@ -51,6 +52,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: 'Ruta no encontrada.' }));
 app.use(errorHandler);
