@@ -19,10 +19,13 @@ const UserSchema = new mongoose.Schema(
       match: /^[a-z0-9_]+$/, // mismas reglas que ya validaba el frontend
       index: true,
     },
-    // Solo guardamos el HASH, jamás la contraseña en texto plano
+    // Identidad opcional de Google; se mantiene privada en las respuestas JSON.
+    email: { type: String, trim: true, lowercase: true, sparse: true, unique: true },
+    googleId: { type: String, sparse: true, unique: true },
+    // Las cuentas Google no tienen contraseña local; los usuarios existentes conservan su hash.
     passwordHash: {
       type: String,
-      required: true,
+      required: false,
       select: false, // nunca se devuelve por defecto en las consultas
     },
     // Foto de perfil guardada como data URL base64 (ya comprimida/recortada en el navegador
@@ -49,6 +52,8 @@ const UserSchema = new mongoose.Schema(
 UserSchema.set('toJSON', {
   transform: (_doc, ret) => {
     delete ret.passwordHash;
+    delete ret.googleId;
+    delete ret.email;
     delete ret.__v;
     return ret;
   },
