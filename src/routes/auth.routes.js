@@ -26,6 +26,8 @@ const passwordLimiter = rateLimit({
 
 router.post('/register', authLimiter, ctrl.register);
 router.post('/login', authLimiter, ctrl.login);
+router.get('/google/config', ctrl.googleConfig);
+router.post('/google', authLimiter, ctrl.googleLogin);
 router.post('/logout', ctrl.logout);
 router.get('/me', requireAuth, ctrl.me);
 router.patch('/profile', requireAuth, ctrl.updateProfile);
